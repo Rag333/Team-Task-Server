@@ -20,28 +20,36 @@ dotenv.config();
 
 const app = express();
 
-// 🔐 Security middleware
+// 🔐 Security
 app.use(helmet());
 
-// 🌐 CORS
-app.use(cors());
+// 🔥 IMPORTANT (for deployment)
+app.set("trust proxy", 1);
+
+// 🌐 CORS (FIXED)
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "https://team-task-client.vercel.app/"],
+    credentials: true,
+  }),
+);
 
 // 📦 Body parser
 app.use(express.json());
 
-// 🚫 Rate limiting (protect from abuse)
+// 🚫 Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 min
-  max: 100 // limit each IP
+  windowMs: 15 * 60 * 1000,
+  max: 100,
 });
 app.use(limiter);
 
 // 🧪 Health check
-app.get("/", (req, res) => {
-  res.send("API is running...");
+app.get("/api/health", (req, res) => {
+  res.json({ message: "Backend working fine" });
 });
 
-// 🗄️ DB connection
+// 🗄️ DB
 connectDB();
 
 // 📌 Routes
@@ -51,12 +59,12 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
-// ❌ 404 handler (important)
+// ❌ 404
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
 
-// ⚠️ Global error handler
+// ⚠️ Error handler
 app.use(errorHandler);
 
 // 🚀 Start server
